@@ -2,6 +2,7 @@ from datetime import datetime
 from serializer_mixin import db, SerializerMixin
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
+from config import bcrypt
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'

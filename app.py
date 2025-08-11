@@ -10,3 +10,6 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 # from models import User,Video,Lyrics,Score,SavedSong,VideoStats
+
+if __name__ == '__main__':
+    app.run(port=5555, debug=True)
