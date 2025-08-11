@@ -1,95 +1,84 @@
-from faker import Faker
-from random import choice, randint
-# from datetime import datetime, timedelta
-from app import app, db
+from datetime import date
+from config import create_app, db
 from models import User, Video, Lyrics, Score, SavedSong, VideoStats
 
-fake = Faker()
+# Create the Flask app instance
+app = create_app()
 
-with app.app_context():
-    
-    db.create_all()
-    print("🌱 Seeding database...")
-    
-    db.session.query(SavedSong).delete()
-    db.session.query(VideoStats).delete()
-    db.session.query(Video).delete()
-    db.session.query(Lyrics).delete()
-    db.session.query(Score).delete()
-    db.session.query(User).delete()
+def seed_data():
+    with app.app_context():
+        # Reset database
+        db.drop_all()
+        db.create_all()
 
-    roles = ["composer", "artist", "viewer"]
-    users = []
-    for _ in range(15):
-        user = User(
-            username=fake.user_name(),
-            email=fake.unique.email(),
-            password_hash=fake.sha256(),
-            role=choice(roles),
-            created_at=fake.date_time_this_year()
+        # --- Users ---
+        user1 = User(username="john_doe", email="john@example.com", role="user")
+        user1.password_hash = "password123"
+
+        user2 = User(username="admin_girl", email="admin@example.com", role="admin")
+        user2.password_hash = "securepass"
+
+        user3 = User(username="choir_leader", email="choir@example.com", role="user")
+        user3.password_hash = "sing4joy"
+
+        db.session.add_all([user1, user2, user3])
+        db.session.commit()
+
+        # --- Lyrics ---
+        lyrics1 = Lyrics(content="Amazing grace, how sweet the sound...", language="English")
+        lyrics2 = Lyrics(content="Bwana u mwema...", language="Swahili")
+
+        db.session.add_all([lyrics1, lyrics2])
+        db.session.commit()
+
+        # --- Scores ---
+        score1 = Score(file_url="https://example.com/scores/amazing_grace.pdf", format="PDF")
+        score2 = Score(file_url="https://example.com/scores/bwana_u_mwema.pdf", format="PDF")
+
+        db.session.add_all([score1, score2])
+        db.session.commit()
+
+        # --- Videos ---
+        video1 = Video(
+            title="Amazing Grace",
+            description="A heartfelt rendition of Amazing Grace",
+            video_url="https://example.com/videos/amazing_grace.mp4",
+            uploader_id=user1.id,
+            lyrics_id=lyrics1.id,
+            score_id=score1.id,
+            views=150,
+            likes=25
         )
-        users.append(user)
-        db.session.add(user)
-    db.session.commit()
 
-    
-    lyrics_list = []
-    for _ in range(15):
-        lyric = Lyrics(
-            content=fake.paragraph(nb_sentences=5),
-            language=choice(["English", "Latin", "Swahili"])
+        video2 = Video(
+            title="Bwana U Mwema",
+            description="Swahili worship song",
+            video_url="https://example.com/videos/bwana_u_mwema.mp4",
+            uploader_id=user3.id,
+            lyrics_id=lyrics2.id,
+            score_id=score2.id,
+            views=200,
+            likes=40
         )
-        lyrics_list.append(lyric)
-        db.session.add(lyric)
-    db.session.commit()
 
-    
-    scores_list = []
-    for _ in range(15):
-        score = Score(
-            file_url=f"https://example.com/scores/{fake.word()}.pdf",
-            format="PDF"
-        )
-        scores_list.append(score)
-        db.session.add(score)
-    db.session.commit()
+        db.session.add_all([video1, video2])
+        db.session.commit()
 
-    
-    videos = []
-    for _ in range(15):
-        video = Video(
-            title=fake.sentence(nb_words=4),
-            description=fake.paragraph(nb_sentences=3),
-            video_url=f"https://example.com/videos/{fake.word()}.mp4",
-            uploader_id=choice(users).id,
-            upload_date=fake.date_time_this_year(),
-            lyrics_id=choice(lyrics_list).id,
-            score_id=choice(scores_list).id,
-            views=randint(50, 5000),
-            likes=randint(10, 2000)
-        )
-        videos.append(video)
-        db.session.add(video)
-    db.session.commit()
+        # --- Saved Songs ---
+        saved1 = SavedSong(user_id=user1.id, video_id=video2.id)
+        saved2 = SavedSong(user_id=user3.id, video_id=video1.id)
 
-    
-    for _ in range(15):
-        saved = SavedSong(
-            user_id=choice(users).id,
-            video_id=choice(videos).id,
-            saved_at=fake.date_time_this_year()
-        )
-        db.session.add(saved)
-    db.session.commit()
+        db.session.add_all([saved1, saved2])
+        db.session.commit()
 
-    for _ in range(15):
-        stat = VideoStats(
-            video_id=choice(videos).id,
-            date=fake.date_this_year(),
-            views=randint(100, 10000),
-            likes=randint(10, 500)
-        )
-        db.session.add(stat)
-    db.session.commit()
+        # --- Video Stats ---
+        stat1 = VideoStats(video_id=video1.id, date=date.today(), views=150, likes=25)
+        stat2 = VideoStats(video_id=video2.id, date=date.today(), views=200, likes=40)
 
-    print("✅ Seeding complete!")
+        db.session.add_all([stat1, stat2])
+        db.session.commit()
+
+        print("✅ Database seeded successfully!")
+
+if __name__ == "__main__":
+    seed_data()

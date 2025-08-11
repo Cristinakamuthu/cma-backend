@@ -7,6 +7,8 @@ name = "pypi"
 flask = "*"
 flask-sqlalchemy = "*"
 faker = "*"
+flask-bcrypt = "*"
+flask-jwt-extended = "*"
 
 [dev-packages]
 

@@ -10,9 +10,12 @@ class User(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=False, unique=True)
-    password_hash = db.Column(db.String(200), nullable=False)
+    _password_hash = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False)  
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    videos = db.relationship('Video', backref='uploader', lazy=True)
+    saved_songs = db.relationship('SavedSong', backref='user', lazy=True)
 
     def __repr__(self):
         return f"<User #{self.id} - {self.username} ({self.role})>"
@@ -32,7 +35,7 @@ class User(db.Model, SerializerMixin):
         self._password_hash = bcrypt.generate_password_hash(password.encode()).decode()
 
     def authenticate(self, password):
-        return self._password_hash and bcrypt.check_password_hash(self._password_hash, password.encode())
+        return bcrypt.check_password_hash(self._password_hash, password.encode())
 
 
 
