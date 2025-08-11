@@ -1,5 +1,7 @@
 from datetime import datetime
 from serializer_mixin import db, SerializerMixin
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import validates
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
@@ -10,6 +12,29 @@ class User(db.Model, SerializerMixin):
     password_hash = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False)  
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<User #{self.id} - {self.username} ({self.role})>"
+
+    @validates('email')
+    def validate_email(self, key, email):
+        if email and ('@' not in email or '.' not in email):
+            raise ValueError("Please provide a suitable email address")
+        return email
+
+    @hybrid_property
+    def password_hash(self):
+        raise AttributeError("Password hashes are write-only.")
+
+    @password_hash.setter
+    def password_hash(self, password):
+        self._password_hash = bcrypt.generate_password_hash(password.encode()).decode()
+
+    def authenticate(self, password):
+        return self._password_hash and bcrypt.check_password_hash(self._password_hash, password.encode())
+
+
+
 
     videos = db.relationship('Video', backref='uploader', lazy=True)
     saved_songs = db.relationship('SavedSong', backref='user', lazy=True)
